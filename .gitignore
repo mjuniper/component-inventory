@@ -1,0 +1,5 @@
+node_modules
+component-inventory.csv.old
+component-names-output.json
+hub-component-inventory.csv
+.DS_Store
