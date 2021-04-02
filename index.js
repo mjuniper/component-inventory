@@ -6,6 +6,7 @@ fs = require('fs');
 // these are the components that the ember app knows about (ie from the DI container) - see ember-container.js
 const componentNames = JSON.parse(fs.readFileSync('./component-names-input.json'));
 
+// directories in the monorepo in which to search for components
 const directoriesToSearch = [
   'activation-engine/addon/components',
   'community-engine/addon/components',
@@ -22,6 +23,7 @@ const directoriesToSearch = [
   'teams-engine/addon/components',
 ];
 
+// the base path in which to search - ie the monorepo packages directory
 const BASE_PATH = '/Users/mich7501/Dev/opendata-ui/packages/';
 var finder = find(BASE_PATH);
 
@@ -42,13 +44,14 @@ finder.on('path', function (path, stat) {
 
     const componentNameFromFile = file.split('/components/')[1];
     // console.log(`componentNameFromFile: ${componentNameFromFile}`);
-    // find the component name by looking for the one we found in the file system in our known components array
+    // see if the component we think we found is in our known components array
     // we want this step because otherwise we will end up with directories that contain other components but that are not actual component names themselves
     // like item, search, pages
+    // i'm sure there are other ways of solving this...
     const componentName = componentNames.find(c => c === componentNameFromFile);
 
-    // read the file and see if it is glimmer or classic
     if (componentName) {
+      // read the file and see if it is glimmer or classic
       let type = ''
       if (path.includes('.js')) {
         const fileContents = fs.readFileSync(path, 'utf8');
@@ -59,13 +62,17 @@ finder.on('path', function (path, stat) {
         }
       }
 
+      // get the package name from the file path
       const package = file.split('/')[0];
-      const resultItem = results.find(result => result[0] === componentName && result[1] === package);
 
+      // see if the item is already in our results array
+      const resultItem = results.find(result => result[0] === componentName && result[1] === package);
+      // this is because we will get multiple paths associated with each component, 1 or more of: directory, index.js, template.js, component-name.js, index.hbs, template.hbs, component-name.hbs, component-name.scss, readme, maybe test files, yada yada yada
       if (!resultItem) {
+        // if not, add it
         results.push([ componentName, file.split('/')[0], file, '', '', '', '', '', '' ])
       } else if (type) {
-        // update the type
+        // if it is already in our results array but this time we have the type, update the type
         resultItem[4] = type;
       }
     }
